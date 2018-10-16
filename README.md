@@ -39,7 +39,8 @@ Matrix expected_local_matrix = global_matrix * MatrixRef(jacobian, kGlobalSize, 
 parameterization.MultiplyByJacobian(x,10,global_matrix.data(),local_matrix.data());
 ```
 
-**Geometric Interpretation of the MultiplyByJacobian**: At the first sight, to non-experts, it might seem unclear how this operation relates geometrically to the typical Riemannian operations such as projection, retraction, geodesic flow, exp, log and all that. The short answer is ***MultiplyByJacobian* maps the Euclidean gradient to the Riemannian gradient**. Quoting Sameer Agarwal:
+#### Geometric Interpretation of the MultiplyByJacobian 
+At the first sight, to non-experts, it might seem unclear how this operation relates geometrically to the typical Riemannian operations such as projection, retraction, geodesic flow, exp, log and all that. The short answer is ***MultiplyByJacobian* maps the Euclidean gradient to the Riemannian gradient**. Quoting Sameer Agarwal:
 
 > MultiplyByJacobian is not a generic projection operator onto the tangent space, but rather the matrix that takes the gradient vector/Jacobian matrix in the ambient coordinates to the tangent space.  What MultiplyByJacobian does is that instead of computing the Jacobian of the Plus operator at delta = 0, and then applying it to the gradient/Jacboian, it lets the user define how it is to be done, especially for high dimensional spaces. 
 
@@ -58,58 +59,8 @@ The code is mostly composed of multiple *hpp* files, that one can simply import 
 ## Sample Code
 I include a basic example that finds the closest matrix (in the Frobenius sense) on the manifold, to a given matrix in the ambient space. I guess this is called matrix denoising. 
 
-Below lies a sample main file that can make use of the library. One could call it as follow:
-
-```
-sample_BA.exe savedViews.txt savedMatches.txt savedParameters.txt savedViewsBA.txt savedMatchesBA.txt savedParametersBA.txt 0
-```
-
-The sample:
-
 ```cpp
-int main(int argc, char** argv)
-{
-	std::string fileNameViews = std::string(argv[1]);
-	std::string fileNameViewMatches = std::string(argv[2]);
-	std::string fileNameParameters = std::string(argv[3]);
-	std::string fileNameViewsOut = std::string(argv[4]);
-	std::string fileNameViewMatchesOut = std::string(argv[5]);
-	std::string fileNameParametersOut = std::string(argv[6]);
-	int camToAdjust = atoi(argv[7]);
 
-	std::vector<TView> views;
-	std::vector<TViewMatch> viewMatches;
-	TBundleAdjustmentParams parameters;
-	std::cout << "Loading...\n";
-	loadViewsMatchesAndParameters(fileNameViews, fileNameViewMatches, fileNameParameters, views, viewMatches, parameters);
-
-	TBundleAdjustment ba;
-	std::vector<Eigen::Vector3d> points3d;
-	std::vector<double> reprjErrors;
-
-	std::vector<int> cameraIndicesToAdjust;
-	cameraIndicesToAdjust.push_back(camToAdjust);
-
-	parameters.verbose = 1;
-	parameters.adjustIntrinsics = false; //don't wanna adjust cam intrinsics
-	parameters.adjustmentMode = TBAMode::EPI_REFINE;
-	parameters.robustLoss = TLossFunctionType::TUKEY; // use robust tukey loss. this is the default.
-
-	parameters.print();
-	viewMatches[0].print();
-	views[camToAdjust].print();
-
-	std::cout << "runMultiviewReconstruction...\n";
-	bool status = ba.runMultiviewRefinement(views, viewMatches, cameraIndicesToAdjust, parameters, points3d, &reprjErrors);
-	views[camToAdjust].print();
-
-	std::cout << "saveViewsMatchesAndParameters...\n";
-	saveViewsMatchesAndParameters(fileNameViewsOut, fileNameViewMatchesOut, fileNameParametersOut, views, viewMatches, parameters);
-
-	std::cout << "bye bye!\n";
-
-	return 0;
-}
 ```
 
 ### Authors
