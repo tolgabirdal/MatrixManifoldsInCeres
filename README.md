@@ -50,6 +50,76 @@ At the first sight, to non-experts, it might seem unclear how this operation rel
 
 With these operations well understood, it is possible to implement local parameterization operations regarding matrix manifolds such as Stiefel, Grassmann, Birkhoff and etc. I further make use of Eigen so that the matrix operations are fast and robust. One can then use these in line-search methods to perform optimization over large matrices **efficiently and easily**.
 
+### Product Manifolds
+
+It is also possible to operate on the cartesian product of manifolds. In Ceres terms this is somewhat equivalent to specifying a different (or the same!) parameterization for each parameter block. According to me, a *ProductParameterization* is just another *LocalParameterization* that is composed of multiple local parameterizations. Such polymorphist view enables one to create a single class that can handle a composition / mix of different local parameterization.
+
+## Usage & Sample Code
+Within the samples folder, I include a basic example that finds the closest matrix (in the Frobenius sense) on the manifold, to a given matrix in the ambient space. I guess this is called matrix denoising. Below is a sample snippet that finds the closest doubly stochastic matrix and demonstrates the use of Birkhoff Polytope (multinomial doubly stochastic matrices). 
+
+```cpp
+// doubly stochastic denoising
+int main()
+{
+	size_t N = 10;
+	MatrixXd A = (MatrixXd)(MatrixXd::Random(N, N)); // just a random matrix
+	A = A.cwiseAbs(); // make it non-negative.
+	MatrixXd X = DSn_rand(N); // A random matrix on Birkhoff - initial solution
+	
+	cout << "Given Matrix:\n" << A << endl << endl;  // print the matrix
+	cout << "Initial Solution:\n" << X << endl << endl;  // print the initial solution
+
+	// create our first order gradient problem
+	MatrixDenoising *denoiseFunction = new MatrixDenoising(A);
+	BirkhoffParameterization *birkhoffParameterization = new BirkhoffParameterization(N);
+	GradientProblem birkhoffProblem(denoiseFunction, birkhoffParameterization);
+
+	GradientProblemSolver::Summary summary = solveGradientProblem(birkhoffProblem, X);
+
+	cout<<summary.FullReport()<<endl;
+
+	// check if X is on the manifold
+	cout << "Final Solution:\n" << X << endl << endl;  // print the final solution
+	cout << "Is X on Manifold: "<<DSn_check(X, 0.0001) << endl;
+
+    return 0;
+}
+```
+
+We can do the same thing on the Stiefel manifold too. This time, a closed form solution (projection onto the Stiefel manifold) exists and we can compare the two solutions:
+
+```C++
+// stiefel denoising
+int main()
+{
+	size_t N = 10, K = 10; // specific case when N=K : orthogonal group
+	MatrixXd A = (MatrixXd)(MatrixXd::Random(N, K)); // just a random matrix
+	MatrixXd X = Stiefel_rand(N, K); // A random matrix on Birkhoff - initial solution
+
+	cout << "Given Matrix:\n" << A << endl << endl;  // print the matrix
+	cout << "Initial Solution:\n" << X << endl << endl;  // print the initial solution
+
+	MatrixDenoising *denoiseFunction = new MatrixDenoising(A); // create our first order gradient problem
+	StiefelParameterization *stiefelParameterization = new StiefelParameterization(N, K);
+	GradientProblem stiefelProblem(denoiseFunction, stiefelParameterization);
+
+	GradientProblemSolver::Summary summary = solveGradientProblem(stiefelProblem, X);
+
+	cout << summary.FullReport() << endl;
+
+	// check if X is on the manifold
+	cout << "Final Solution:\n" << X << endl << endl;  // print the final solution
+	cout << "Is X on Manifold: " << Stiefel_check(X) << endl << endl;
+		
+	// print the closed form solution
+	cout << "Solution by projection (closed form solution should be close to Final Solution):\n" << Stiefel_projection_SVD(A) << endl << endl;  
+
+	return 0;
+}
+```
+
+Easy peasy lemon squeezy!
+
 ## Dependencies
 
 Only dependencies are Google's Ceres solver itself (http://ceres-solver.org/) and *Eigen* (http://eigen.tuxfamily.org/index.php?title=Main_Page).
@@ -57,38 +127,6 @@ Only dependencies are Google's Ceres solver itself (http://ceres-solver.org/) an
 ## Compilation and Usage
 
 The code is mostly composed of multiple *hpp* files, that one can simply import into a project.
-
-## Sample Code
-Within the samples folder, I include a basic example that finds the closest matrix (in the Frobenius sense) on the manifold, to a given matrix in the ambient space. I guess this is called matrix denoising. Below is a sample snippet that finds the closest doubly stochastic matrix and demonstrates the use of Birkhoff Polytope (multinomial doubly stochastic matrices). 
-
-```cpp
-// doubly stochastic denoising
-int main()
-{
-    size_t N = 10;
-    MatrixXd A = (MatrixXd)(MatrixXd::Random(N, N)); // just a random matrix
-    A = A.cwiseAbs(); // make it non-negative.
-    MatrixXd X = DSn_rand(N); // A random matrix on Birkhoff - initial solution
-    
-    cout << "Given Matrix:\n" << A << endl << endl;  // print the matrix
-    cout << "Initial Solution:\n" << X << endl << endl;  // print the initial solution
-
-    // create our first order gradient problem
-    MatrixDenoising *synchronizationFunction = new MatrixDenoising(A);
-    BirkhoffParameterization *birkhoffParameterization = new BirkhoffParameterization(N);
-    GradientProblem birkhoffProblem(synchronizationFunction, birkhoffParameterization);
-
-    GradientProblemSolver::Summary summary = solveGradientProblem(birkhoffProblem, X);
-
-    cout<<summary.FullReport()<<endl;
-
-    // check if X is on the manifold
-    cout << "Final Solution:\n" << X << endl << endl;  // print the initial solution
-    cout << "Is X on Manifold: "<<DSn_check(X, 0.0001) << endl;
-
-    return 0;
-}
-```
 
 ### Authors
 **Tolga Birdal**  
