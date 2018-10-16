@@ -59,32 +59,32 @@ Only dependencies are Google's Ceres solver itself (http://ceres-solver.org/) an
 The code is mostly composed of multiple *hpp* files, that one can simply import into a project.
 
 ## Sample Code
-I include a basic example that finds the closest matrix (in the Frobenius sense) on the manifold, to a given matrix in the ambient space. I guess this is called matrix denoising. Below is a sample that finds the closest doubly stochastic matrix and demonstrates the use of Birkhoff Polytope (multinomial doubly stochastic matrices). 
+Within the samples folder, I include a basic example that finds the closest matrix (in the Frobenius sense) on the manifold, to a given matrix in the ambient space. I guess this is called matrix denoising. Below is a sample snippet that finds the closest doubly stochastic matrix and demonstrates the use of Birkhoff Polytope (multinomial doubly stochastic matrices). 
 
 ```cpp
 // doubly stochastic denoising
 int main()
 {
-	size_t N = 10;
-	MatrixXd A = (MatrixXd)(MatrixXd::Random(N, N)); // just a random matrix
-	A = A.cwiseAbs(); // make it non-negative.
-	MatrixXd X = DSn_rand(N); // A random matrix on Birkhoff - initial solution
-	
-	cout << "Given Matrix:\n" << A << endl << endl;  // print the matrix
-	cout << "Initial Solution:\n" << X << endl << endl;  // print the initial solution
+    size_t N = 10;
+    MatrixXd A = (MatrixXd)(MatrixXd::Random(N, N)); // just a random matrix
+    A = A.cwiseAbs(); // make it non-negative.
+    MatrixXd X = DSn_rand(N); // A random matrix on Birkhoff - initial solution
+    
+    cout << "Given Matrix:\n" << A << endl << endl;  // print the matrix
+    cout << "Initial Solution:\n" << X << endl << endl;  // print the initial solution
 
-	// create our first order gradient problem
-	MatrixDenoising *synchronizationFunction = new MatrixDenoising(A);
-	BirkhoffParameterization *birkhoffParameterization = new BirkhoffParameterization(N);
-	GradientProblem birkhoffProblem(synchronizationFunction, birkhoffParameterization);
+    // create our first order gradient problem
+    MatrixDenoising *synchronizationFunction = new MatrixDenoising(A);
+    BirkhoffParameterization *birkhoffParameterization = new BirkhoffParameterization(N);
+    GradientProblem birkhoffProblem(synchronizationFunction, birkhoffParameterization);
 
-	GradientProblemSolver::Summary summary = solveGradientProblem(birkhoffProblem, X);
+    GradientProblemSolver::Summary summary = solveGradientProblem(birkhoffProblem, X);
 
-	cout<<summary.FullReport()<<endl;
+    cout<<summary.FullReport()<<endl;
 
-	// check if X is on the manifold
-	cout << "Final Solution:\n" << X << endl << endl;  // print the initial solution
-	cout << "Is X on Manifold: "<<DSn_check(X, 0.0001) << endl;
+    // check if X is on the manifold
+    cout << "Final Solution:\n" << X << endl << endl;  // print the initial solution
+    cout << "Is X on Manifold: "<<DSn_check(X, 0.0001) << endl;
 
     return 0;
 }
@@ -97,7 +97,7 @@ Enjoy it!
 
 ### References
 
-[1] https://fzheng.me/2018/01/23/ba-demo-ceres/
-[2] http://www.lloydhughes.co.za/index.php/using-eigen-quaternions-and-ceres-solver/
-[3] https://github.com/strasdat/Sophus/blob/master/test/ceres/local_parameterization_se3.hpp
-[4] https://www.manopt.org
+[1] https://fzheng.me/2018/01/23/ba-demo-ceres/<br>
+[2] http://www.lloydhughes.co.za/index.php/using-eigen-quaternions-and-ceres-solver/<br>
+[3] https://github.com/strasdat/Sophus/blob/master/test/ceres/local_parameterization_se3.hpp<br>
+[4] https://www.manopt.org<br>
