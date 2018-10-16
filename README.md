@@ -12,7 +12,7 @@ virtual bool Plus(const double* x, const double* delta, double* x_plus_delta) co
 virtual bool ComputeJacobian(const double* x, double* jacobian) const = 0;
 ```
 
-Plus overrides the standard + operation of the update, and enables the walk on the manifold (e.g. by the geodesic flow). *ComputeJacobian* though, is the differentiation of the plus operation with respect to the perturbations - that is . For instance, for the case of rigid poses *ComputeJacobian* would differentiate the incremented states w.r.t to the incremental Lie algebra, whereas *Plus* would designate the state increment method [1]. Once these two are implemented, the standard trust region solvers work just the same way.
+Plus overrides the standard + operation of the update, and enables the walk on the manifold (e.g. by the geodesic flow). *ComputeJacobian* though, is the differentiation of the plus operation with respect to the perturbations. For instance, for the case of rigid poses *ComputeJacobian* would differentiate the incremented states w.r.t to the incremental Lie algebra, whereas *Plus* would designate the state increment method [1]. Once these two are implemented, the standard trust region solvers work just the same way.
 
 For some problems where the number of parameters are just too large, the aforementioned Jacobian computation becomes very memory intensive. If one is to update an N=100x100 matrix on the manifold, the Jacobian would be 10000 x 10000 matrix. This creates a challenge in for instance operating on the Matrix manifolds. Ideally, in such cases, we like to avoid Jacobian based solvers (Gauss-Newton, Levenberg Marquadt etc.) and resort to the gradient based ones (steepest descent or line-search methds such as LBFGS). **Ceres has both!** But this part of the library remains still undocumented, it is unclear how to make these methods work on the manifolds. The key is **MultiplyByJacobian**:
 
@@ -97,7 +97,7 @@ int main()
 {
 	size_t N = 10, K = 10; // specific case when N=K : orthogonal group
 	MatrixXd A = (MatrixXd)(MatrixXd::Random(N, K)); // just a random matrix
-	MatrixXd X = Stiefel_rand(N, K); // A random matrix on Birkhoff - initial solution
+	MatrixXd X = Stiefel_rand(N, K); // A random matrix on Stiefel manifold - initial solution
 
 	cout << "Given Matrix:\n" << A << endl << endl;  // print the matrix
 	cout << "Initial Solution:\n" << X << endl << endl;  // print the initial solution
