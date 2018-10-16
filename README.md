@@ -3,6 +3,8 @@ Matrix Manifold Local Parameterizations for Ceres Solver
 
 Google's Ceres solver (http://ceres-solver.org/) is just a great tool for solving unconstrained non-linear least squares problems. Many of us engaged in 3D computer vision used it heavily to tackle camera calibration, multiview reconstruction, tracking, SLAM and etc. In an abundance of these computer vision problems, there exists an underlying geometric structure of the optimization variables (or parameter blocks in Ceres terminology). For example, a sphere in three dimensions is a two dimensional manifold, embedded in a three dimensional space. Using the 2D parameterization removes a redundant dimension from the optimization, making it numerically more robust and efficient. Ceres allows us to exploit this geometry by restricting the update of the parameteres to the **Riemannian manifold** of these parameters. For instance, EigenQuaternionParameterization [2] in Ceres, or Sophus Lie group library [3] do exactly that.
 
+The goal of this repo is to extend Ceres towards a Riemannian optimization library! Let's begin.
+
 **LocalParameterization** class in Ceres requires us to implement two inherited functions : *Plus* and *ComputeJacobian*:
 
 ```C++
@@ -44,9 +46,9 @@ At the first sight, to non-experts, it might seem unclear how this operation rel
 
 > MultiplyByJacobian is not a generic projection operator onto the tangent space, but rather the matrix that takes the gradient vector/Jacobian matrix in the ambient coordinates to the tangent space.  What MultiplyByJacobian does is that instead of computing the Jacobian of the Plus operator at delta = 0, and then applying it to the gradient/Jacboian, it lets the user define how it is to be done, especially for high dimensional spaces. 
 
-Note that all in all this method is very similar to what ***egrad2rgrad*** function of ManOpt [4]. 
+*MultiplyByJacobian* also ensures that the second input to the Plus operator, *delta*, is always in the tangent space of the parameter *x*. Note that all in all this method is very similar to what ***egrad2rgrad*** function of ManOpt [4]. 
 
-With these operations well understood, it is possible to implement local parameterization operations regarding matrix manifolds such as Stiefel, Grassmann, Birkhoff and etc. We can then use these in line-search methods to perform optimization over large matrices **efficiently and easily**.
+With these operations well understood, it is possible to implement local parameterization operations regarding matrix manifolds such as Stiefel, Grassmann, Birkhoff and etc. I further make use of Eigen so that the matrix operations are fast and robust. One can then use these in line-search methods to perform optimization over large matrices **efficiently and easily**.
 
 ## Dependencies
 
@@ -57,10 +59,35 @@ Only dependencies are Google's Ceres solver itself (http://ceres-solver.org/) an
 The code is mostly composed of multiple *hpp* files, that one can simply import into a project.
 
 ## Sample Code
-I include a basic example that finds the closest matrix (in the Frobenius sense) on the manifold, to a given matrix in the ambient space. I guess this is called matrix denoising. 
+I include a basic example that finds the closest matrix (in the Frobenius sense) on the manifold, to a given matrix in the ambient space. I guess this is called matrix denoising. Below is a sample that finds the closest doubly stochastic matrix and demonstrates the use of Birkhoff Polytope (multinomial doubly stochastic matrices). 
 
 ```cpp
+// doubly stochastic denoising
+int main()
+{
+	size_t N = 10;
+	MatrixXd A = (MatrixXd)(MatrixXd::Random(N, N)); // just a random matrix
+	A = A.cwiseAbs(); // make it non-negative.
+	MatrixXd X = DSn_rand(N); // A random matrix on Birkhoff - initial solution
+	
+	cout << "Given Matrix:\n" << A << endl << endl;  // print the matrix
+	cout << "Initial Solution:\n" << X << endl << endl;  // print the initial solution
 
+	// create our first order gradient problem
+	MatrixDenoising *synchronizationFunction = new MatrixDenoising(A);
+	BirkhoffParameterization *birkhoffParameterization = new BirkhoffParameterization(N);
+	GradientProblem birkhoffProblem(synchronizationFunction, birkhoffParameterization);
+
+	GradientProblemSolver::Summary summary = solveGradientProblem(birkhoffProblem, X);
+
+	cout<<summary.FullReport()<<endl;
+
+	// check if X is on the manifold
+	cout << "Final Solution:\n" << X << endl << endl;  // print the initial solution
+	cout << "Is X on Manifold: "<<DSn_check(X, 0.0001) << endl;
+
+    return 0;
+}
 ```
 
 ### Authors
