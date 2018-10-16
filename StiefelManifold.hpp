@@ -23,7 +23,6 @@ static MatrixXd Stiefel_projection_SVD(MatrixXd &X)
 template <typename T>
 static void Stiefel_retract(const MatrixXd X, const MatrixXd U, T &Y, double tau = 1.0)
 {
-	//Y = X + tau * U;
 	Stiefel_projection((X + tau * U).eval(), Y);
 }
 
@@ -82,7 +81,6 @@ public:
 		const Map<const MatrixXd> P0(x, N, K);
 		const Map<const MatrixXd> U(global_matrix, N, K);
 		Map<MatrixXd> UProj(local_matrix, N, K);
-		// for stiefel Egrad2Rgrad = projection
 		Stiefel_projection_TxM(P0, U, UProj);
 		return true;
 	}
